@@ -4,22 +4,45 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 
 // Singleton class to map input devices to a player index.
-public class PlayerDeviceManager {
+public class PlayerDeviceManager : MonoBehaviour {
     public static int MAX_PLAYERS = 4;
+
     private static PlayerDeviceManager instance;
 
     private int[] deviceIds = new int[MAX_PLAYERS]; // When the same device is disconnected and reconnected, it will be assigned a different id.
     private int numPlayers = 0;
 
-    public static PlayerDeviceManager GetInstance() {
-        if (instance == null) { instance = new PlayerDeviceManager(); }
-        return instance;
+    public static PlayerDeviceManager GetInstance() { return instance; }
+
+    public int GetNumPlayers() {
+        return numPlayers;
     }
 
-    PlayerDeviceManager() {
-        for (int i = 0; i < deviceIds.Length; ++i) {
-            deviceIds[i] = InputDevice.InvalidDeviceId;
+    public bool IsPlayerDevice(int playerIndex, int deviceId) {
+        return deviceIds[playerIndex] == deviceId;
+    }
+
+    private void Awake() {
+        if (instance == null) {
+            Initialise();
+            instance = this;
+            DontDestroyOnLoad(gameObject);
+        } else if (instance != this) {
+            Destroy(gameObject);
         }
+    }
+
+    private void Update() {
+    }
+
+    private void OnDestroy() {
+        if (instance == this) {
+            Uninitialise();
+        }
+    }
+
+    private void Initialise() {
+        ResetDevices();
 
         // Iterate through all existing devices, and assign them to players.
         for (int i = 0; i < InputSystem.devices.Count; ++i) {
@@ -32,37 +55,51 @@ public class PlayerDeviceManager {
         InputSystem.onDeviceChange += OnDeviceChange;
     }
 
-    ~PlayerDeviceManager() {
+    private void Uninitialise() {
         InputSystem.onDeviceChange -= OnDeviceChange;
+        ResetDevices();
+    }
+
+    private void ResetDevices() {
+        for (int i = 0; i < deviceIds.Length; ++i) { deviceIds[i] = InputDevice.InvalidDeviceId; }
+        numPlayers = 0;
     }
 
     // Change this function to fit your game's needs.
     private bool IsSuitableDevice(InputDevice device) {
-        // Ignore anything that isn't a gamepad.
-        return device is Gamepad;
+        // Ignore anything that isn't a gamepad or joystick.
+        return (device is Gamepad) || (device is Joystick);
+    }
+
+    private bool IsDeviceAssigned(int deviceId) {
+        // This runs in O(n) time, but I'm fine with it since n = 4.
+        for (int i = 0; i < deviceIds.Length; ++i) {
+            if (deviceIds[i] == deviceId) {
+                return true;
+            }
+        }
+        return false;
     }
 
     // Assign this device to the first player that does not yet have a device.
     private void TryAssignDevice(int deviceId) {
         for (int i = 0; i < deviceIds.Length; ++i) {
-            if (deviceIds[i] == InputDevice.InvalidDeviceId) {
-                deviceIds[i] = deviceId;
-                ++numPlayers;
-                Debug.Log("Player " + i.ToString() + " assigned device " + deviceId.ToString() + ".");
-                break;
-            }
+            if (deviceIds[i] != InputDevice.InvalidDeviceId) { continue; }
+            deviceIds[i] = deviceId;
+            ++numPlayers;
+            Debug.Log("Player " + i.ToString() + " assigned device " + deviceId.ToString() + ".");
+            break;
         }
     }
 
     // Unassign this device if it has already been assigned to a player.
     private void TryUnassignDevice(int deviceId) {
         for (int i = 0; i < deviceIds.Length; ++i) {
-            if (deviceIds[i] == deviceId) {
-                deviceIds[i] = InputDevice.InvalidDeviceId;
-                --numPlayers;
-                Debug.Log("Player " + i.ToString() + " unassigned device " + deviceId.ToString() + ".");
-                break;
-            }
+            if (deviceIds[i] != deviceId) { continue; }
+            deviceIds[i] = InputDevice.InvalidDeviceId;
+            --numPlayers;
+            Debug.Log("Player " + i.ToString() + " unassigned device " + deviceId.ToString() + ".");
+            break;
         }
     }
 
@@ -87,17 +124,5 @@ public class PlayerDeviceManager {
             default:
                 break;
         }
-    }
-
-    public int GetNumPlayers() { return numPlayers; }
-
-    public bool IsPlayerDevice(int playerIndex, int deviceId) { return deviceIds[playerIndex] == deviceId; }
-
-    public bool IsDeviceAssigned(int deviceId) {
-        // This runs in O(n) time, but I'm fine with it since n = 4.
-        for (int i = 0; i < deviceIds.Length; ++i) {
-            if (deviceIds[i] == deviceId) { return true; }
-        }
-        return false;
     }
 }
