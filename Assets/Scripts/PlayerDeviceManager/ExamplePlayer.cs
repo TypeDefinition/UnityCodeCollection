@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public class PlayerController : MonoBehaviour {
+public class ExamplePlayer : MonoBehaviour {
     // Player index used to differentiate between players. Range is 0 (inclusive) to PlayerDeviceManager.MAX_PLAYERS (exclusive).
     [SerializeField] private int playerIndex = 0;
     // Do not use the Unity's PlayerInput component. That's fucking garbage and sometimes breaks. Do this instead.
