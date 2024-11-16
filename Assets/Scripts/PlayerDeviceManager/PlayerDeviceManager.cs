@@ -5,12 +5,17 @@ using UnityEngine.InputSystem;
 
 // Singleton class to map input devices to a player index.
 public class PlayerDeviceManager : MonoBehaviour {
-    public static int MAX_PLAYERS = 4;
+    public const int MAX_PLAYERS = 4;
 
     private static PlayerDeviceManager instance;
 
-    private int[] deviceIds = new int[MAX_PLAYERS]; // When the same device is disconnected and reconnected, it will be assigned a different id.
-    private int numPlayers = 0;
+    // We want this to be static so that it persists between scenes.
+    private static int[] deviceIds = new int[MAX_PLAYERS]; // When the same device is disconnected and reconnected, it will be assigned a different id.
+    private static int numPlayers = 0;
+
+    public delegate void PlayerAssignCallback(int playerIndex, int deviceId);
+    public PlayerAssignCallback onPlayerAssigned;
+    public PlayerAssignCallback onPlayerUnassigned;
 
     public static PlayerDeviceManager GetInstance() { return instance; }
 
@@ -87,6 +92,7 @@ public class PlayerDeviceManager : MonoBehaviour {
             if (deviceIds[i] != InputDevice.InvalidDeviceId) { continue; }
             deviceIds[i] = deviceId;
             ++numPlayers;
+            onPlayerAssigned?.Invoke(i, deviceId);
             Debug.Log("Player " + i.ToString() + " assigned device " + deviceId.ToString() + ".");
             break;
         }
@@ -98,6 +104,7 @@ public class PlayerDeviceManager : MonoBehaviour {
             if (deviceIds[i] != deviceId) { continue; }
             deviceIds[i] = InputDevice.InvalidDeviceId;
             --numPlayers;
+            onPlayerUnassigned?.Invoke(i, deviceId);
             Debug.Log("Player " + i.ToString() + " unassigned device " + deviceId.ToString() + ".");
             break;
         }

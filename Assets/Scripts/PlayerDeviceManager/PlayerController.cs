@@ -7,26 +7,26 @@ public class PlayerController : MonoBehaviour {
     // Player index used to differentiate between players. Range is 0 (inclusive) to PlayerDeviceManager.MAX_PLAYERS (exclusive).
     [SerializeField] private int playerIndex = 0;
     // Do not use the Unity's PlayerInput component. That's fucking garbage and sometimes breaks. Do this instead.
-    private GameControls gameControl;
+    private GameInput gameInput;
 
     private void Awake() {
-        gameControl = new GameControls();
+        gameInput = new GameInput();
     }
 
     private void OnEnable() {
-        gameControl.Enable();
-        gameControl.Player.Up.performed += OnUp;
-        gameControl.Player.Down.performed += OnDown;
-        gameControl.Player.Left.performed += OnLeft;
-        gameControl.Player.Right.performed += OnRight;
+        gameInput.Enable();
+        gameInput.Player.Up.performed += OnUp;
+        gameInput.Player.Down.performed += OnDown;
+        gameInput.Player.Left.performed += OnLeft;
+        gameInput.Player.Right.performed += OnRight;
     }
 
     private void OnDisable () {
-        gameControl.Player.Up.performed -= OnUp;
-        gameControl.Player.Down.performed -= OnDown;
-        gameControl.Player.Left.performed -= OnLeft;
-        gameControl.Player.Right.performed -= OnRight;
-        gameControl.Disable();
+        gameInput.Player.Up.performed -= OnUp;
+        gameInput.Player.Down.performed -= OnDown;
+        gameInput.Player.Left.performed -= OnLeft;
+        gameInput.Player.Right.performed -= OnRight;
+        gameInput.Disable();
     }
 
     private void Start() {
